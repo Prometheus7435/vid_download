@@ -123,20 +123,20 @@ def animeFreak(site, fsave):
     # print(episodes)
     ep_count = int(infodump.split(episodes)[1].split('">')[0])
 
-    ep = [[str(episodes.replace('href="','') + str(n)), s_save] for n in range(1,ep_count)]
+    ep = [[str(episodes.replace('href="','') + str(n)), s_save] for n in range(1,(ep_count  + 1))]
     # print(ep)
-    # download(ep[5])
+    download(ep[-1])
 #     for e in ep:
 #         print(e)
-    try:
-        with Pool(3) as p:
-            p.map(download, ep)
-#        for e in ep:
-#            download(e)
-#            time.sleep(20)
-#            print(e)
-    except Exception as e:
-        print(e)
+#     try:
+#         with Pool(3) as p:
+#             p.map(download, ep)
+# #        for e in ep:
+# #            download(e)
+# #            time.sleep(20)
+# #            print(e)
+#     except Exception as e:
+#         print(e)
 
 
     # def file_check(file):
@@ -150,9 +150,9 @@ def animeFreak(site, fsave):
     #     time.sleep(10)
         
 
-    print(genre, series, s_save)
+    # print(genre, series, s_save)
     sys.stdout.write("{} {} {}".format(genre, series, s_save))
-    return genre, series, s_save
+    return genre, series, s_save, ep_count
 
 def watchCartoon(site):
     numEp = 1000
@@ -204,8 +204,8 @@ if (__name__ == '__main__'):
     fsave = os.path.abspath(r"/home/zach/Videos/")
     os.chdir(fsave)
     
-    # videos = sys.argv[1]
-    videos = 'https://www.animefreak.tv/watch/shin-chuuka-ichiban'
+    videos = sys.argv[1]
+    # videos = 'https://www.animefreak.tv/watch/shin-chuuka-ichiban'
     # videos = 'https://www.animefreak.tv/watch/one-piece'    
     askSite(videos, fsave)
 

@@ -14,14 +14,15 @@ info=$(python anime_download.py $var)
 
 # IFS=' '
 #Read the split words into an array based on comma delimiter
-IFS=" " read genre series save_loc <<< "$info"
+IFS=" " read genre series save_loc episode_count <<< "$info"
 # echo $genre
 # echo $series
 # # echo $synop
 # echo $save_loc
 
+echo $episode_count
+# echo $genre $series $save_loc
 
-echo $genre $series $save_loc
 # while ! [find $save_loc -maxdepth 1 -type f -exec ".part$" {}]
 # while ! [grep -i ".part" $save_loc]
 # do
@@ -31,8 +32,48 @@ echo $genre $series $save_loc
 # done
 
 
+for file in $save_loc/*
+do
+    # echo $(dirname "$file")/$(basename "$file")
+    rep=" "
+    filename=$(basename "$file")
+    newname=${filename// /_}  #$($(basename "$file") | tr " " "_")
+    newfile=$(dirname "$file")/$newname
+    # echo $newfile
+    mv "$file" $newfile
+    # echo $file 
+    # echo $(dirname $(dirname "$file"))
+    # echo $(basename "$file")
+    epname=$(basename "$file")
+    newloc=$(dirname $(dirname "$file"))/$newname  #$(basename "$file")
+    # echo $(dirname $(dirname "$file"))
+    # echo $newloc
 
-find $save_loc -maxdepth 1 -type f -exec ffmpeg -i {} -metadata genre=$genre .{} \; 
+    ffmpeg -i $newfile -metadata genre=$genre $newloc
+done
+
+rm -r $save_loc
+
+
+    
+    # echo $(dirname $(dirname "$file"))/$(basename "$file")
+    
+    # ffmpeg -i $file -metadata genre=$genre "/home/zach/Videos/test.mp4" \;
+
+    
+# cmd [option] "$file" >> results.out
+
+
+# $ basename /usr/local/svn/repos/example
+# example
+# $ echo "/server/root/$(basename /usr/local/svn/repos/example)"
+# /server/root/example
+
+#  dir=~/Library/../Desktop/../..
+# $ parentdir="$(dirname "$dir")"
+# $ echo $parentdir
+# find $save_loc -maxdepth 1 -type f -exec ffmpeg -i {} -metadata genre=$genre {} \; /home/zach/Videos/$series
+# find $save_loc -maxdepth 1 -type f -exec ffmpeg -i {} -metadata genre=$genre .{} \; 
 # find $save_loc -maxdepth 1 -type f -exec rm {} \;
 
 
