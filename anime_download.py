@@ -9,6 +9,7 @@ import time
 from youtube_dl import YoutubeDL
 from urllib.request import urlopen
 import urllib
+import requests
 from multiprocessing import Pool
 #import mutagen
 #from mutagen.mp4 import MP4
@@ -42,17 +43,37 @@ mp4_video_tags['stik'] = 10
 mp4_video_tags.save()
 """
 
-def download(site, opts=''):
+
+class Downloader:
+
+    def __init__(self):
+        self.fsave = os.path.abspath(r"/home/zach/Videos/")
+        os.chdir(self.fsave)
+
+    def askSite(self, videos):
+        if 'animefreak.tv' in videos:
+            animeFreak(videos)
+        elif 'thewatchcartoononline.tv' in videos:
+            watchCartoon(videos)
+        else:
+            with Pool(2) as p:
+                p.map(download, videos)
+
+    
+def download(options, opts=''):
     '''
     param site: site that you want to download
     param opts: youtube-dl download options
     '''
-    print(site)
+    site = options[0]
+    # print(site)
+    os.chdir(options[1])
 #    ydl_opts = {'format':'bestvideo+bestaudio/best'}
 #    try:
 #    ydl_opts = {"format":"best[height <= 2048]"}
 #    except Exception as e:
-    ydl_opts = {}
+    ydl_opts = { 'quiet': True,
+                 'no_warnings': True}
     with YoutubeDL(ydl_opts) as ydl:
 #        result = ydl.extract_info([site], download=False)
         ydl.download([site])
@@ -75,33 +96,63 @@ def download(site, opts=''):
 #    mp4_video_tags.save()
 
 
-def animeFreak(site):
-
+def animeFreak(site, fsave):
+    ep = []
+    
     series = site.split('animefreak.tv/watch/')[1]
+    gstr = 'href="https://www.animefreak.tv/home/genres/'    
     # print(series)
-
+    series_save = os.path.join(fsave, series)
+    try:
+        os.mkdir(series_save)
+        os.mkdir(os.path.join(series_save, "tmp"))
+    except:
+        pass
+        # s_save = os.path.join(fsave, series)
+    s_save = os.path.join(series_save, "tmp")
+    os.chdir(s_save)
+    
     # numEp = input(str("How many episodes does ", series, " have?\n>"))
     req = urllib.request.Request(site, headers={'User-Agent': 'Mozilla/5.0'})
-    gstr = 'href="https://www.animefreak.tv/home/genres/'
-    genre = urlopen(req).read().decode().split(gstr)[1].split('">')[0]
+    infodump = urlopen(req).read().decode()
+    genre = infodump.split(gstr)[1].split('">')[0]
+    # genre = urlopen(req).read().decode().split(gstr)[1].split('">')[0]    
+    synop = infodump.split('class="anime-details">')[1].split('<')[0]
+    # print(synop)
+    episodes = str('href="' + site + '/episode/episode-')
+    # print(episodes)
+    ep_count = int(infodump.split(episodes)[1].split('">')[0])
 
-    ep = []
-    for n in range(10): #int(numEp)):
-        ep.append(str(site + '/episode/episode-' + str(n + 1)))
-
-#     try:
-#         with Pool(3) as p:
-#             p.map(download, ep)
-# #        for e in ep:
-# #            download(e)
-# #            time.sleep(20)
-# #            print(e)
-#     except Exception as e:
+    ep = [[str(episodes.replace('href="','') + str(n)), s_save] for n in range(1,ep_count)]
+    # print(ep)
+    # download(ep[5])
+#     for e in ep:
 #         print(e)
-    # sys.stdout.write(series + ' ' + genre)
-    # sys.stdout.write(genre)
-    print(genre, series)
-    return genre, series
+    try:
+        with Pool(3) as p:
+            p.map(download, ep)
+#        for e in ep:
+#            download(e)
+#            time.sleep(20)
+#            print(e)
+    except Exception as e:
+        print(e)
+
+
+    # def file_check(file):
+    #     print(file)
+    #     if file.endswith(".part"):
+    #         return False
+    #     else:
+    #         return True
+    # while not all([os.path.join(s_save, f) for f in os.listdir(s_save)]):
+    #     print('sleeping')
+    #     time.sleep(10)
+        
+
+    print(genre, series, s_save)
+    sys.stdout.write("{} {} {}".format(genre, series, s_save))
+    return genre, series, s_save
 
 def watchCartoon(site):
     numEp = 1000
@@ -133,10 +184,10 @@ def watchCartoon(site):
         print(e)
      
     
-def askSite(videos):
+def askSite(videos, fsave):
 #    for s in site:
     if 'animefreak.tv' in videos:
-        animeFreak(videos)
+        animeFreak(videos, fsave)
     elif 'thewatchcartoononline.tv' in videos:
         watchCartoon(videos)
     else:
@@ -152,9 +203,14 @@ if (__name__ == '__main__'):
     # fsave = input("Where do you want to save these to?\n>>")
     fsave = os.path.abspath(r"/home/zach/Videos/")
     os.chdir(fsave)
-    videos = sys.argv[1]
-    # videos = str(input("Paste site url. For multiple, seperate with a space. Ex. video1 video2\n>>")).split(" ")
-    askSite(videos)    
+    
+    # videos = sys.argv[1]
+    videos = 'https://www.animefreak.tv/watch/shin-chuuka-ichiban'
+    # videos = 'https://www.animefreak.tv/watch/one-piece'    
+    askSite(videos, fsave)
+
+    
+    # videos = str(input("Paste site url. For multiple, seperate with a space. Ex. video1 video2\n>>")).split(" ")    
 #    ydl_opts = input("what options would you like?\n>>")
 #    ydl_opts = {}
 
