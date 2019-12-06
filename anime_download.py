@@ -96,13 +96,7 @@ def download(options, opts=''):
 #    mp4_video_tags.save()
 
 
-def animeFreak(site, fsave):
-    ep = []
-    
-    series = site.split('animefreak.tv/watch/')[1]
-    gstr = 'href="https://www.animefreak.tv/home/genres/'    
-    # print(series)
-    series_save = os.path.join(fsave, series)
+def save_folder(series_save):
     try:
         os.mkdir(series_save)
         os.mkdir(os.path.join(series_save, "tmp"))
@@ -110,49 +104,71 @@ def animeFreak(site, fsave):
         pass
         # s_save = os.path.join(fsave, series)
     s_save = os.path.join(series_save, "tmp")
-    os.chdir(s_save)
+
+    return s_save
+
+def animeFreak(site, fsave):
+    ep = []
     
+    series = site.split('animefreak.tv/watch/')[1]
+    gstr = 'href="https://www.animefreak.tv/home/genres/'    
+    # print(series)
+    series_save = os.path.join(fsave, series)
+    s_save = save_folder(series_save)
+    os.chdir(s_save)    
+
+
+    # html = urlopen(str(site)).read().decode('utf-8')
+            
+    genre = []
     # numEp = input(str("How many episodes does ", series, " have?\n>"))
     req = urllib.request.Request(site, headers={'User-Agent': 'Mozilla/5.0'})
-    infodump = urlopen(req).read().decode()
-    genre = infodump.split(gstr)[1].split('">')[0]
-    # genre = urlopen(req).read().decode().split(gstr)[1].split('">')[0]    
-    synop = infodump.split('class="anime-details">')[1].split('<')[0]
-    # print(synop)
-    episodes = str('href="' + site + '/episode/episode-')
-    # print(episodes)
-    ep_count = int(infodump.split(episodes)[1].split('">')[0])
+    infodump = urlopen(req).read().decode('utf-8')
 
-    ep = [[str(episodes.replace('href="','') + str(n)), s_save] for n in range(1,(ep_count  + 1))]
-    # print(ep)
-    download(ep[-1])
-#     for e in ep:
-#         print(e)
-#     try:
-#         with Pool(3) as p:
-#             p.map(download, ep)
-# #        for e in ep:
-# #            download(e)
-# #            time.sleep(20)
-# #            print(e)
-#     except Exception as e:
-#         print(e)
+    # print(site)
+    
+    episodecount = []
+    sets = infodump.split('<')
+    for i, s in enumerate(sets):
+        if 'href="https://www.animefreak.tv/home/genres/' in s:
+            genre.append(s.split('href="https://www.animefreak.tv/home/genres/')[1].split('"')[0])
+        if str('href="' + site + '/episode/episode-') in s:
+            episodecount.append(s.split(str('href="' + site + '/episode/episode-'))[1].split('"')[0])
+            # href="https://www.animefreak.tv/watch/shin-chuuka-ichiban/episode/episode-8"
+        if '>Season :' in s:
+            print(sets[i+2].split('href="https://www.animefreak.tv/home/')[1].split('"')[0])
 
+    # print(episodecount)
+            
+    # genre = infodump.split(gstr)[1].split('">')[0]
+    # # genre = urlopen(req).read().decode().split(gstr)[1].split('">')[0]    
+    # synop = infodump.split('class="anime-details">')[1].split('<')[0]
+    # # print(synop)
 
-    # def file_check(file):
-    #     print(file)
-    #     if file.endswith(".part"):
-    #         return False
-    #     else:
-    #         return True
-    # while not all([os.path.join(s_save, f) for f in os.listdir(s_save)]):
-    #     print('sleeping')
-    #     time.sleep(10)
-        
+    # # print(episodes)
+    ep_count = int(max(episodecount))
+    # print(ep_count)
 
-    # print(genre, series, s_save)
-    sys.stdout.write("{} {} {}".format(genre, series, s_save))
-    return genre, series, s_save, ep_count
+    
+    ep = [[str(site + '/episode/episode-' + str(n)), s_save] for n in range(1,(ep_count  + 1))]
+    # print(genre)
+    out_genre = ""
+    for g in genre:
+        tmp = ""
+        tmp = str(out_genre + "," + g)
+        out_genre = tmp
+    out_genre = out_genre[1:]
+    # # print(out_genre)
+    # # download(ep[-2])
+    try:
+        with Pool(3) as p:
+            p.map(download, ep)
+    except Exception as e:
+        print(e)
+
+    # # print(genre, series, s_save)
+    sys.stdout.write("{} {} {}".format(out_genre, series, s_save))
+    return out_genre, series, s_save, ep_count
 
 def watchCartoon(site):
     numEp = 1000
@@ -160,29 +176,84 @@ def watchCartoon(site):
     ep = []
     start = 'https://www.thewatchcartoononline.tv/'
     fullseries = site.split('thewatchcartoononline.tv/anime/')[1]
-    series = site.split('thewatchcartoononline.tv/anime/')[1].split('-english-dubbed')[0]
-    print("series:  " + str(series))
-    req = urllib.request.Request(site, headers={'User-Agent': 'Mozilla/5.0'})
-    gen = urlopen(req).read().decode().split('</')
-    dub = ''
-    if '-english-dubbed' in fullseries:
-        dub = '-english-dubbed'
-    if '-english-subbed' in fullseries:
-        dub = '-english-subbed'
-        
-    for g in gen:
-        if 'class="genre-buton">' in g:
-            genr = g.split('class="genre-buton">')[1]
-            genre.append(genr)
-    for n in range(int(numEp)):
-        ep.append(str(start + series.split(dub)[0] + '-episode-' + str(n+1) + dub))
-        
+    # dub = ''
+    # if fullseries.endswith('-dubbed-episodes'):
+    #     dub = '-english-dubbed'
+    # elif fullseries.endswith('-subbed-episodes'):
+    #     dub = '-english-subbed'
+    # else:
+    #     dub = False
+
+    # print(site)
+    # print(fullseries)
     try:
-        with Pool(3) as p:
-            p.map(download, ep)
-    except Exception as e:
-        print(e)
-     
+        series = site.split('thewatchcartoononline.tv/anime/')[1].split('-english')[0]
+    except:
+        series = site.split('thewatchcartoononline.tv/anime/')[1]
+    # print("series:  " + str(series))
+
+    # print(str('href="' + site + '-episode-'))
+    # print(str('href="' + site.replace('anime/','')))
+    # sys.exit()
+
+    s_save = save_folder(series)
+
+
+    
+    genre = []
+    # numEp = input(str("How many episodes does ", series, " have?\n>"))
+    req = urllib.request.Request(site, headers={'User-Agent': 'Mozilla/5.0'})
+    infodump = urlopen(req).read().decode('utf-8')
+
+    episodecount = []
+    sets = infodump.split('<')
+    for i, s in enumerate(sets):
+        # print(s)
+        if '"genre-buton">' in s:
+            genre.append(s.split('"genre-buton">')[1])
+        if str('href="' + site.replace('anime/','').replace('ova', '')) in s:
+            # print(s.split(str(site.replace('anime/','').replace('-ova', '') + '-episode-'))[1].split('-english')[0])
+            episodecount.append(int(s.split(str(site.replace('anime/','').replace('-ova', '') + '-episode-'))[1].split('-english')[0]))
+    #     if str('href="' + site + '/episode/episode-') in s:
+    #         episodecount.append(s.split(str('href="' + site + '/episode/episode-'))[1].split('"')[0])
+    #         # href="https://www.animefreak.tv/watch/shin-chuuka-ichiban/episode/episode-8"
+    #     if '>Season :' in s:
+    #         print(sets[i+2].split('href="https://www.animefreak.tv/home/')[1].split('"')[0])
+
+    ep_count = int(max(episodecount))
+    print(ep_count)
+    ep = [[str(site + '/episode/episode-' + str(n)), s_save] for n in range(1,(ep_count  + 1))]
+
+    out_genre = ""
+    for g in genre:
+        tmp = ""
+        tmp = str(out_genre + "," + g)
+        out_genre = tmp
+    out_genre = out_genre[1:]
+    # print(out_genre)
+
+
+    
+    # req = urllib.request.Request(site, headers={'User-Agent': 'Mozilla/5.0'})
+    # gen = urlopen(req).read().decode().split('</')
+        
+    # for g in gen:
+    #     if 'class="genre-buton">' in g:
+    #         genr = g.split('class="genre-buton">')[1]
+    #         genre.append(genr)
+    # for n in range(int(numEp)):
+    #     ep.append(str(start + series.split(dub)[0] + '-episode-' + str(n+1) + dub))
+
+
+    download(ep[-2])
+    # try:
+    #     with Pool(3) as p:
+    #         p.map(download, ep)
+    # except Exception as e:
+    #     print(e)
+
+    
+    sys.stdout.write("{} {} {}".format(out_genre, series, s_save))
     
 def askSite(videos, fsave):
 #    for s in site:
@@ -205,8 +276,11 @@ if (__name__ == '__main__'):
     os.chdir(fsave)
     
     videos = sys.argv[1]
-    # videos = 'https://www.animefreak.tv/watch/shin-chuuka-ichiban'
-    # videos = 'https://www.animefreak.tv/watch/one-piece'    
+    # videos = input()
+    # videos = 'https://www.thewatchcartoononline.tv/anime/mobile-suit-gundam-wing'
+    # videos = 'https://www.thewatchcartoononline.tv/anime/3-nen-d-gumi-glass-no-kamen-subbed-episodes'
+    # videos = 'https://www.animefreak.tv/watch/one-piece'
+    
     askSite(videos, fsave)
 
     

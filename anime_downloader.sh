@@ -14,13 +14,13 @@ info=$(python anime_download.py $var)
 
 # IFS=' '
 #Read the split words into an array based on comma delimiter
-IFS=" " read genre series save_loc episode_count <<< "$info"
-# echo $genre
-# echo $series
-# # echo $synop
-# echo $save_loc
+IFS=" " read genre series save_loc <<< "$info"
+echo $genre
+echo $series
+# echo $synop
+echo $save_loc
 
-echo $episode_count
+# echo $episode_count
 # echo $genre $series $save_loc
 
 # while ! [find $save_loc -maxdepth 1 -type f -exec ".part$" {}]
